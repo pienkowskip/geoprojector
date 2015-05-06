@@ -2,5 +2,29 @@
 
 require 'geo_projector'
 require 'pry'
+require 'geoutm'
 
-binding.pry
+points = {
+moko: [49.201389, 20.071306, 1410],
+miegusz: [49.187222, 20.06, 2438],
+mnich: [49.1925, 20.055, 2068]
+}
+
+utms = {}
+points.each do |name,coor|
+  puts name, coor.inspect
+  utm = GeoUtm::LatLon.new(coor[0], coor[1]).to_utm
+  puts utm, "\n"
+  utms[name] = utm
+end
+
+points.keys.combination(2).each do |from,to|
+  dist = utms[from].distance_to(utms[to])
+  xyz = ->(sym) do
+    [utms[sym].e, utms[sym].n, points[sym][2]]
+  end
+  dist_true = Math::sqrt(xyz.call(from).zip(xyz.call(to)).map {|a,b| (a - b) ** 2.0}.reduce(:+))
+  puts "#{from}<->#{to}: #{dist} (#{dist_true})"
+end
+
+# binding.pry
